@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Campus Info Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #chat-container {
+      width: 400px;
+      height: 600px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #messages {
+      flex-grow: 1;
+      padding: 15px;
+      overflow-y: auto;
+      border-bottom: 1px solid #ddd;
+    }
+    .message {
+      margin-bottom: 15px;
+      max-width: 75%;
+      line-height: 1.4;
+      padding: 10px 15px;
+      border-radius: 20px;
+      clear: both;
+      word-wrap: break-word;
+    }
+    .message.bot {
+      background-color: #e1f0ff;
+      color: #0366d6;
+      float: left;
+      border-bottom-left-radius: 0;
+    }
+    .message.user {
+      background-color: #0366d6;
+      color: white;
+      float: right;
+      border-bottom-right-radius: 0;
+    }
+    #input-area {
+      display: flex;
+      padding: 10px;
+      background: #fafafa;
+    }
+    #user-input {
+      flex-grow: 1;
+      padding: 10px 15px;
+      border-radius: 25px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #user-input:focus {
+      border-color: #0366d6;
+    }
+    #send-btn {
+      margin-left: 10px;
+      background-color: #0366d6;
+      color: white;
+      border: none;
+      padding: 0 20px;
+      font-size: 16px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    #send-btn:hover {
+      background-color: #024a9d;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <div id="messages"></div>
+    <div id="input-area">
+      <input type="text" id="user-input" placeholder="Ask about schedules, facilities, dining, library, or admin..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Show initial bot message
+    addMessage('bot', 'Hi! How can I assist you with campus info today?');
+
+    sendBtn.addEventListener('click', () => {
+      const text = userInput.value.trim();
+      if (text === '') return;
+      addMessage('user', text);
+      userInput.value = '';
+      respondToUser(text);
+    });
+
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        sendBtn.click();
+      }
+    });
+
+    function addMessage(sender, text) {
+      const msg = document.createElement('div');
+      msg.classList.add('message', sender);
+      msg.textContent = text;
+      messagesEl.appendChild(msg);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function respondToUser(text) {
+      addMessage('bot', '...typing');
+
+      // Remove typing message before adding real response
+      const typingMsg = messagesEl.querySelector('.message.bot:last-child');
+
+      try {
+        // Replace this URL with your real API endpoint
+        const response = await fetch('/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: text }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        messagesEl.removeChild(typingMsg);
+        addMessage('bot', data.answer || "Sorry, I couldn't find that info.");
+      } catch (error) {
+        messagesEl.removeChild(typingMsg);
+        addMessage('bot', "Oops! Something went wrong. Please try again later.");
+        console.error('Error:', error);
+      }
+    }
+  </script>
+</body>
+</html>
