@@ -2,155 +2,661 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Campus Info Chatbot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f9fc;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    /* Smooth scroll for chat container */
+    html { scroll-behavior: smooth; }
+    /* Nice gradient background animation */
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-    #chat-container {
-      width: 400px;
-      height: 600px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+    .bg-animated {
+      background: linear-gradient(120deg, #0ea5e9, #7c3aed, #14b8a6);
+      background-size: 200% 200%;
+      animation: gradientShift 20s ease infinite;
     }
-    #messages {
-      flex-grow: 1;
-      padding: 15px;
-      overflow-y: auto;
-      border-bottom: 1px solid #ddd;
+    /* Chat bubble tails */
+    .tail-left::after {
+      content: "";
+      position: absolute;
+      left: -8px;
+      bottom: 10px;
+      border-width: 8px;
+      border-style: solid;
+      border-color: transparent #111827 transparent transparent; /* slate-900 */
+      filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));
     }
-    .message {
-      margin-bottom: 15px;
-      max-width: 75%;
-      line-height: 1.4;
-      padding: 10px 15px;
-      border-radius: 20px;
-      clear: both;
-      word-wrap: break-word;
+    .tail-right::after {
+      content: "";
+      position: absolute;
+      right: -8px;
+      bottom: 10px;
+      border-width: 8px;
+      border-style: solid;
+      border-color: transparent transparent transparent #0ea5e9; /* sky-500 */
+      filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));
     }
-    .message.bot {
-      background-color: #e1f0ff;
-      color: #0366d6;
-      float: left;
-      border-bottom-left-radius: 0;
+    /* Subtle glass panel */
+    .glass {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    .message.user {
-      background-color: #0366d6;
-      color: white;
-      float: right;
-      border-bottom-right-radius: 0;
+    /* Typing dots */
+    .typing span {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin: 0 2px;
+      background: #e5e7eb;
+      border-radius: 50%;
+      animation: blink 1s infinite ease-in-out;
     }
-    #input-area {
-      display: flex;
-      padding: 10px;
-      background: #fafafa;
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
+      40% { opacity: 1; transform: translateY(-2px); }
     }
-    #user-input {
-      flex-grow: 1;
-      padding: 10px 15px;
-      border-radius: 25px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    #user-input:focus {
-      border-color: #0366d6;
-    }
-    #send-btn {
-      margin-left: 10px;
-      background-color: #0366d6;
-      color: white;
-      border: none;
-      padding: 0 20px;
-      font-size: 16px;
-      border-radius: 25px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    #send-btn:hover {
-      background-color: #024a9d;
-    }
+    /* Responsive max widths */
+    .container-narrow { max-width: 1100px; margin: 0 auto; }
   </style>
 </head>
-<body>
-  <div id="chat-container">
-    <div id="messages"></div>
-    <div id="input-area">
-      <input type="text" id="user-input" placeholder="Ask about schedules, facilities, dining, library, or admin..." />
-      <button id="send-btn">Send</button>
+<body class="min-h-screen bg-animated text-white selection:bg-emerald-300 selection:text-emerald-900">
+  <!-- Header -->
+  <header class="pt-10 pb-6">
+    <div class="container-narrow px-4">
+      <div class="flex items-start md:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <!-- Simple campus crest as SVG -->
+          <div class="w-12 h-12 rounded-2xl bg-white/10 grid place-items-center shadow-lg ring-1 ring-white/10">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 10.5L12 4l9 6.5-9 6.5-9-6.5Z" stroke="#A5B4FC" stroke-width="1.5" />
+              <path d="M7 12v6.5l5 3 5-3V12" stroke="#86EFAC" stroke-width="1.5" />
+              <circle cx="12" cy="9" r="1.2" fill="#FDE68A"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl md:text-3xl font-semibold leading-tight">Campus Info Chatbot</h1>
+            <p class="text-white/80 mt-1">Ask about schedules, facilities, dining, library, and admin procedures.</p>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-3">
+          <button id="clearBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition shadow ring-1 ring-white/10">
+            Clear chat
+          </button>
+          <button id="exportBtn" class="px-4 py-2 rounded-xl bg-emerald-400 text-emerald-950 hover:bg-emerald-300 transition shadow">
+            Export Q&A
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
+  </header>
+
+  <!-- Main layout -->
+  <main class="container-narrow px-4 pb-24 grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <!-- Left: Chat -->
+    <section class="lg:col-span-2 glass rounded-3xl p-4 md:p-6 ring-1 ring-white/10 shadow-xl">
+      <!-- Quick chips -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button class="chip quick text-sm px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-white/10">What are today’s classes?</button>
+        <button class="chip quick text-sm px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-white/10">Dining hall hours</button>
+        <button class="chip quick text-sm px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-white/10">Library study rooms</button>
+        <button class="chip quick text-sm px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-white/10">How to get a transcript?</button>
+        <button class="chip quick text-sm px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-white/10">Gym facilities</button>
+      </div>
+
+      <!-- Chat window -->
+      <div id="chat" class="h-[56vh] md:h-[58vh] overflow-y-auto pr-1 space-y-4">
+        <!-- Assistant welcome -->
+      </div>
+
+      <!-- Composer -->
+      <div class="mt-4">
+        <form id="composer" class="flex items-end gap-2">
+          <div class="flex-1 relative">
+            <textarea id="input" rows="1" placeholder="Ask anything about campus..."
+              class="w-full resize-none rounded-2xl bg-white/10 focus:bg-white/15 transition ring-1 ring-white/10 focus:ring-emerald-300/60 outline-none p-4 pr-12 placeholder-white/60"></textarea>
+            <button id="micBtn" type="button" class="absolute right-10 bottom-2.5 p-2 rounded-xl hover:bg-white/10">
+              <span aria-hidden="true">🎤</span>
+            </button>
+            <button id="sendBtn" type="submit" class="absolute right-2 bottom-2 p-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white shadow">
+              ➤
+            </button>
+          </div>
+        </form>
+        <p class="text-xs text-white/70 mt-2">
+          Demo only: answers are generated from the sample campus database below (no external AI).
+        </p>
+      </div>
+    </section>
+
+    <!-- Right: Campus “database” + filters -->
+    <aside class="glass rounded-3xl p-4 md:p-6 ring-1 ring-white/10 shadow-xl">
+      <h2 class="text-lg font-semibold mb-3">Campus Data Browser</h2>
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <button data-tab="schedules" class="tabBtn px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/10 hover:bg-white/20">Schedules</button>
+        <button data-tab="facilities" class="tabBtn px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/10 hover:bg-white/20">Facilities</button>
+        <button data-tab="dining" class="tabBtn px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/10 hover:bg-white/20">Dining</button>
+        <button data-tab="library" class="tabBtn px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/10 hover:bg-white/20">Library</button>
+        <button data-tab="admin" class="tabBtn px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/10 hover:bg-white/20">Admin</button>
+        <button data-tab="map" class="tabBtn px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/10 hover:bg-white/20">Map</button>
+      </div>
+
+      <div class="relative">
+        <input id="search" type="text" placeholder="Search within selected category..."
+               class="w-full rounded-2xl bg-white/10 focus:bg-white/15 transition ring-1 ring-white/10 focus:ring-emerald-300/60 outline-none p-3 placeholder-white/60">
+        <div class="flex items-center gap-2 mt-3">
+          <label class="text-xs text-white/70">Today</label>
+          <select id="dayFilter" class="flex-1 rounded-xl bg-white/10 ring-1 ring-white/10 p-2">
+            <option value="auto">Auto</option>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+          </select>
+          <button id="copyLink" class="px-3 py-2 rounded-xl bg-emerald-400 text-emerald-950 hover:bg-emerald-300 transition">Share</button>
+        </div>
+      </div>
+
+      <div id="dataList" class="mt-4 space-y-3 max-h-[44vh] overflow-y-auto pr-1"></div>
+    </aside>
+  </main>
+
+  <!-- Footer mini-nav -->
+  <footer class="fixed bottom-0 left-0 right-0">
+    <div class="container-narrow px-4 pb-4">
+      <div class="glass rounded-2xl ring-1 ring-white/10 shadow-xl px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-white/80">
+          <span>Tips:</span>
+          <button class="chip quick text-xs px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-white/10">Show me gym hours</button>
+          <button class="chip quick text-xs px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-white/10">Where is Registrar?</button>
+          <button class="chip quick text-xs px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-white/10">Late-night dining?</button>
+        </div>
+        <div class="md:hidden flex items-center gap-2">
+          <button id="clearBtn2" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 ring-1 ring-white/10">Clear</button>
+          <button id="exportBtn2" class="px-3 py-1.5 rounded-xl bg-emerald-400 text-emerald-950 hover:bg-emerald-300">Export</button>
+        </div>
+      </div>
+    </div>
+  </footer>
 
   <script>
-    const messagesEl = document.getElementById('messages');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
+    // --------- Sample Campus Database (Demo) ----------
+    // Small dataset to keep the demo concise; extend as needed.
+    const campusDB = {
+      schedules: [
+        { id: 'cs101-1', course: 'CS101 - Intro to CS', day: 'Monday', time: '09:00–10:30', location: 'Tech Hall 201', instructor: 'Dr. Rivera' },
+        { id: 'cs101-2', course: 'CS101 - Intro to CS', day: 'Wednesday', time: '09:00–10:30', location: 'Tech Hall 201', instructor: 'Dr. Rivera' },
+        { id: 'math221-1', course: 'MATH221 - Calculus II', day: 'Tuesday', time: '11:00–12:15', location: 'Science 104', instructor: 'Prof. Chen' },
+        { id: 'hist110-1', course: 'HIST110 - World History', day: 'Thursday', time: '13:00–14:15', location: 'Humanities 12', instructor: 'Dr. Patel' },
+        { id: 'bio150-1', course: 'BIO150 - Biology Lab', day: 'Friday', time: '14:30–16:30', location: 'Bio Lab B', instructor: 'Dr. Ahmad' },
+      ],
+      facilities: [
+        { id: 'gym', name: 'Recreation & Fitness Center', hours: { weekday: '6:00–22:00', weekend: '8:00–20:00' }, features: ['Gym', 'Pool', 'Courts', 'Classes'], phone: '555-0100', building: 'North Complex' },
+        { id: 'it-help', name: 'IT Help Desk', hours: { weekday: '8:00–18:00', weekend: 'Closed' }, features: ['Device support', 'Wi‑Fi help'], phone: '555-0142', building: 'Tech Hall Lobby' },
+        { id: 'health', name: 'Student Health Center', hours: { weekday: '9:00–17:00', weekend: 'Closed' }, features: ['Clinic', 'Counseling'], phone: '555-0199', building: 'Wellness Building' },
+      ],
+      dining: [
+        { id: 'dh-main', name: 'Main Dining Hall', hours: { weekday: '7:00–21:00', weekend: '8:00–20:00' }, notes: 'Vegetarian, vegan options', lateNight: false, location: 'Central Quad' },
+        { id: 'cafe-arts', name: 'Arts Café', hours: { weekday: '8:00–18:00', weekend: '10:00–16:00' }, notes: 'Coffee & sandwiches', lateNight: false, location: 'Arts Building' },
+        { id: 'owl-bites', name: 'Owl Bites (Late Night)', hours: { weekday: '18:00–01:00', weekend: '18:00–01:00' }, notes: 'Late-night snacks', lateNight: true, location: 'Student Union' },
+      ],
+      library: {
+        hours: { weekday: '8:00–24:00', weekend: '10:00–22:00' },
+        services: [
+          { id: 'study-rooms', name: 'Study Room Booking', info: 'Reserve up to 2 hours/day', link: 'https://example.edu/study-rooms' },
+          { id: 'printing', name: 'Printing', info: 'B/W $0.05, Color $0.25 per page', link: 'https://example.edu/printing' },
+          { id: 'ask-librarian', name: 'Ask a Librarian', info: 'Live chat 10:00–18:00', link: 'https://example.edu/library-chat' },
+        ],
+        policies: [
+          { id: 'loan', title: 'Loan Periods', text: 'Undergrad: 28 days, Grad: 60 days; renew online.' },
+          { id: 'quiet', title: 'Quiet Zones', text: '3rd floor is silent study only.' },
+        ]
+      },
+      admin: [
+        { id: 'registrar', office: 'Registrar', location: 'Admin Building, Room 101', hours: { weekday: '9:00–16:30', weekend: 'Closed' }, services: ['Transcripts', 'Enrollment verification'], howTo: 'Request transcripts online via Student Portal.' },
+        { id: 'fin-aid', office: 'Financial Aid', location: 'Admin Building, Room 210', hours: { weekday: '9:00–17:00', weekend: 'Closed' }, services: ['FAFSA support', 'Scholarships'], howTo: 'Schedule advising through portal.' },
+        { id: 'admissions', office: 'Admissions', location: 'Welcome Center', hours: { weekday: '8:30–17:30', weekend: 'Closed' }, services: ['Tours', 'Applications'], howTo: 'Book a tour online.' },
+      ],
+      map: [
+        { id: 'm1', name: 'Central Quad', area: 'Center', nearby: ['Main Dining Hall', 'Library'] },
+        { id: 'm2', name: 'Tech Hall', area: 'North', nearby: ['IT Help Desk', 'CS Labs'] },
+        { id: 'm3', name: 'Student Union', area: 'West', nearby: ['Owl Bites', 'Bookstore'] },
+      ]
+    };
 
-    // Show initial bot message
-    addMessage('bot', 'Hi! How can I assist you with campus info today?');
+    // ---------- Utilities ----------
+    const byId = (id) => document.getElementById(id);
+    const chatEl = byId('chat');
+    const inputEl = byId('input');
+    const composerEl = byId('composer');
+    const dataListEl = byId('dataList');
+    const searchEl = byId('search');
+    const dayFilterEl = byId('dayFilter');
+    const copyLinkEl = byId('copyLink');
 
-    sendBtn.addEventListener('click', () => {
-      const text = userInput.value.trim();
-      if (text === '') return;
-      addMessage('user', text);
-      userInput.value = '';
-      respondToUser(text);
-    });
+    const tabs = Array.from(document.querySelectorAll('.tabBtn'));
+    let activeTab = 'schedules';
 
-    userInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        sendBtn.click();
-      }
-    });
-
-    function addMessage(sender, text) {
-      const msg = document.createElement('div');
-      msg.classList.add('message', sender);
-      msg.textContent = text;
-      messagesEl.appendChild(msg);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+    function todayName() {
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      return days[new Date().getDay()];
     }
 
-    async function respondToUser(text) {
-      addMessage('bot', '...typing');
+    function scrollChatToBottom() {
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
 
-      // Remove typing message before adding real response
-      const typingMsg = messagesEl.querySelector('.message.bot:last-child');
+    function createMsg({ from, html }) {
+      const wrap = document.createElement('div');
+      const isUser = from === 'user';
+      wrap.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+      const bubble = document.createElement('div');
+      bubble.className = `${isUser ? 'bg-sky-500 tail-right' : 'bg-slate-900 tail-left'} relative max-w-[85%] md:max-w-[70%] px-4 py-3 rounded-2xl shadow ring-1 ${isUser ? 'ring-sky-300/30' : 'ring-white/10'}`;
+      bubble.innerHTML = html;
+      wrap.appendChild(bubble);
+      return wrap;
+    }
 
-      try {
-        // Replace this URL with your real API endpoint
-        const response = await fetch('/api/query', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: text }),
+    function typingIndicator() {
+      const wrap = document.createElement('div');
+      wrap.className = 'flex justify-start';
+      const bubble = document.createElement('div');
+      bubble.className = 'relative bg-slate-900 tail-left px-4 py-3 rounded-2xl shadow ring-1 ring-white/10';
+      bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+      wrap.appendChild(bubble);
+      return { wrap, bubble };
+    }
+
+    function sanitize(str) {
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
+    // ---------- Simple NLU: intent + entity extraction ----------
+    // Lightweight rules to keep it all client-side.
+    function parseQuery(q) {
+      const text = q.toLowerCase().trim();
+
+      // Category detection
+      const categoryMatchers = [
+        { key: 'schedules', kws: ['schedule','class','classes','course','courses','timetable','today'] },
+        { key: 'facilities', kws: ['facility','facilities','gym','pool','it help','help desk','health','clinic','counsel'] },
+        { key: 'dining', kws: ['dining','food','canteen','cafe','cafeteria','restaurant','meal','eat','late-night','late night'] },
+        { key: 'library', kws: ['library','book','study room','printing','librarian','loan','quiet'] },
+        { key: 'admin', kws: ['registrar','financial aid','admissions','admin','transcript','enrollment','scholarship'] },
+        { key: 'map', kws: ['map','where','locate','nearby','direction'] },
+      ];
+      let category = 'schedules'; // default guess
+      for (const m of categoryMatchers) {
+        if (m.kws.some(k => text.includes(k))) { category = m.key; break; }
+      }
+
+      // Day extraction
+      const dayNames = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+      let day = null;
+      for (const d of dayNames) if (text.includes(d)) { day = d[0].toUpperCase() + d.slice(1); break; }
+      if (!day && /today|now/gi.test(text)) day = todayName();
+
+      // Other entities
+      const lateNight = /late[-\s]?night|late night/i.test(q);
+      const building = /tech hall|science|humanities|admin building|student union|central quad|wellness/i.exec(q)?.[0];
+      const courseCode = /([A-Z]{2,4}\s?\d{3})/i.exec(q)?.[0]?.toUpperCase()?.replace(' ', '');
+
+      return { category, day, lateNight, building, courseCode };
+    }
+
+    // ---------- Answer generators per category ----------
+    function answerSchedules(query, ent) {
+      const day = ent.day || todayName();
+      let list = campusDB.schedules.filter(s => s.day === day);
+      if (ent.courseCode) {
+        list = campusDB.schedules.filter(s => s.course.replace(/\s+/g,'').toUpperCase().includes(ent.courseCode));
+      }
+      if (!list.length) {
+        return {
+          text: `I didn’t find scheduled classes ${ent.courseCode ? 'for ' + ent.courseCode + ' ' : ''}on ${day}.`,
+          refs: []
+        };
+      }
+      const refs = list.map(s => ({
+        title: s.course,
+        detail: `${s.day} • ${s.time} • ${s.location} • ${s.instructor}`
+      }));
+      return {
+        text: ent.courseCode
+          ? `Here are the times I found for ${ent.courseCode}:`
+          : `Here are classes on ${day}:`,
+        refs
+      };
+    }
+
+    function answerFacilities(query, ent) {
+      let list = campusDB.facilities;
+      if (ent.building) list = list.filter(f => f.building.toLowerCase().includes(ent.building.toLowerCase()));
+      // gym/pool keywords
+      if (/gym|fitness|workout|pool/i.test(query)) list = list.filter(f => /gym|fitness|pool/i.test(f.name + ' ' + (f.features||[]).join(' ')));
+      if (!list.length) return { text: 'No matching facilities found.', refs: [] };
+      const refs = list.map(f => ({
+        title: f.name,
+        detail: `Weekday: ${f.hours.weekday} • Weekend: ${f.hours.weekend} • ${f.building}`
+      }));
+      return { text: 'Here are the facilities that match:', refs };
+    }
+
+    function answerDining(query, ent) {
+      let list = campusDB.dining;
+      if (ent.lateNight) list = list.filter(d => d.lateNight);
+      if (/breakfast/i.test(query)) {/* could filter hours by morning; kept simple */}
+      if (/coffee|cafe/i.test(query)) list = list.filter(d => /cafe/i.test(d.name));
+      if (!list.length) return { text: 'No dining options matched that request.', refs: [] };
+      const refs = list.map(d => ({
+        title: d.name,
+        detail: `Weekday: ${d.hours.weekday} • Weekend: ${d.hours.weekend} • ${d.location}${d.lateNight ? ' • Late-night' : ''}`
+      }));
+      return { text: ent.lateNight ? 'Late-night dining options:' : 'Here are some dining options:', refs };
+    }
+
+    function answerLibrary(query, ent) {
+      if (/study|room/i.test(query)) {
+        const svc = campusDB.library.services.find(s => s.id === 'study-rooms');
+        return { text: `${svc.name}: ${svc.info}`, refs: [{ title: 'Book a room', detail: svc.link }] };
+      }
+      if (/print/i.test(query)) {
+        const svc = campusDB.library.services.find(s => s.id === 'printing');
+        return { text: `Printing details: ${svc.info}`, refs: [{ title: 'Printing info', detail: svc.link }] };
+      }
+      if (/hour|open|close/i.test(query)) {
+        return { text: `Library hours — Weekday: ${campusDB.library.hours.weekday}, Weekend: ${campusDB.library.hours.weekend}.`, refs: [] };
+      }
+      const refs = [
+        ...campusDB.library.services.map(s => ({ title: s.name, detail: s.info })),
+        ...campusDB.library.policies.map(p => ({ title: p.title, detail: p.text })),
+      ];
+      return { text: 'Here’s what the library offers:', refs };
+    }
+
+    function answerAdmin(query, ent) {
+      if (/transcript|enrollment|verify|verification/i.test(query)) {
+        const reg = campusDB.admin.find(a => a.office === 'Registrar');
+        return {
+          text: `Registrar — ${reg.location}. Weekday: ${reg.hours.weekday}. ${reg.howTo}`,
+          refs: [{ title: 'Services', detail: reg.services.join(', ') }]
+        };
+      }
+      if (/financial|aid|scholar/i.test(query)) {
+        const fa = campusDB.admin.find(a => a.office === 'Financial Aid');
+        return {
+          text: `Financial Aid — ${fa.location}. Weekday: ${fa.hours.weekday}. ${fa.howTo}`,
+          refs: [{ title: 'Services', detail: fa.services.join(', ') }]
+        };
+      }
+      const refs = campusDB.admin.map(a => ({
+        title: a.office,
+        detail: `${a.location} • Weekday: ${a.hours.weekday} • Services: ${a.services.join(', ')}`
+      }));
+      return { text: 'Administrative offices and key services:', refs };
+    }
+
+    function answerMap(query, ent) {
+      let list = campusDB.map;
+      if (ent.building) list = list.filter(m => m.name.toLowerCase().includes(ent.building.toLowerCase()));
+      if (/where|locate/i.test(query) && !ent.building) {
+        return { text: 'Try asking “Where is Tech Hall?” or “What’s near Student Union?”', refs: [] };
+      }
+      if (!list.length) return { text: 'I couldn’t find that place on the campus map.', refs: [] };
+      const refs = list.map(m => ({
+        title: m.name,
+        detail: `Area: ${m.area} • Nearby: ${m.nearby.join(', ')}`
+      }));
+      return { text: 'Here’s what I found on the campus map:', refs };
+    }
+
+    function routeAnswer(query, ent) {
+      switch (ent.category) {
+        case 'schedules': return answerSchedules(query, ent);
+        case 'facilities': return answerFacilities(query, ent);
+        case 'dining': return answerDining(query, ent);
+        case 'library': return answerLibrary(query, ent);
+        case 'admin': return answerAdmin(query, ent);
+        case 'map': return answerMap(query, ent);
+        default: return { text: "I’m not sure yet. Try asking about schedules, facilities, dining, library, or admin.", refs: [] };
+      }
+    }
+
+    // ---------- Chat handling ----------
+    const memory = {
+      history: [], // {role:'user'|'assistant', content:''}
+      qna: [] // exportable pairs
+    };
+
+    function addAssistantMessage(text, refs=[]) {
+      const htmlRefs = refs.length
+        ? `<ul class="mt-2 space-y-1 text-white/80">${refs.map(r => `<li class="bg-white/5 ring-1 ring-white/10 rounded-xl px-3 py-2"><div class="font-medium">${sanitize(r.title)}</div><div class="text-sm">${sanitize(r.detail)}</div></li>`).join('')}</ul>`
+        : '';
+      const node = createMsg({ from: 'assistant', html: `<div class="leading-relaxed">${sanitize(text)}</div>${htmlRefs}` });
+      chatEl.appendChild(node);
+      memory.history.push({ role:'assistant', content: text });
+      scrollChatToBottom();
+    }
+
+    function addUserMessage(text) {
+      const node = createMsg({ from: 'user', html: `<div class="leading-relaxed">${sanitize(text)}</div>` });
+      chatEl.appendChild(node);
+      memory.history.push({ role:'user', content: text });
+      scrollChatToBottom();
+    }
+
+    function simulateThinking(callback) {
+      const t = typingIndicator();
+      chatEl.appendChild(t.wrap);
+      scrollChatToBottom();
+      setTimeout(() => {
+        t.wrap.remove();
+        callback();
+      }, 550 + Math.random()*500);
+    }
+
+    function handleQuery(raw) {
+      const ent = parseQuery(raw);
+      const ans = routeAnswer(raw, ent);
+      addAssistantMessage(ans.text, ans.refs);
+      memory.qna.push({ q: raw, a: ans.text, refs: ans.refs });
+    }
+
+    // ---------- Data Browser ----------
+    function renderList() {
+      const q = searchEl.value.trim().toLowerCase();
+      const dayPick = dayFilterEl.value === 'auto' ? todayName() : dayFilterEl.value;
+      let items = [];
+      switch (activeTab) {
+        case 'schedules':
+          items = campusDB.schedules.filter(s =>
+            (!q || s.course.toLowerCase().includes(q) || s.location.toLowerCase().includes(q) || s.instructor.toLowerCase().includes(q))
+            && (s.day === dayPick)
+          ).map(s => ({
+            title: s.course,
+            detail: `${s.day} • ${s.time} • ${s.location} • ${s.instructor}`
+          }));
+          break;
+        case 'facilities':
+          items = campusDB.facilities.filter(f =>
+            !q || f.name.toLowerCase().includes(q) || f.building.toLowerCase().includes(q) || (f.features.join(' ').toLowerCase().includes(q))
+          ).map(f => ({
+            title: f.name,
+            detail: `Weekday: ${f.hours.weekday} • Weekend: ${f.hours.weekend} • ${f.building}`
+          }));
+          break;
+        case 'dining':
+          items = campusDB.dining.filter(d =>
+            !q || d.name.toLowerCase().includes(q) || d.location.toLowerCase().includes(q) || d.notes.toLowerCase().includes(q)
+          ).map(d => ({
+            title: d.name + (d.lateNight ? ' • Late-night' : ''),
+            detail: `Weekday: ${d.hours.weekday} • Weekend: ${d.hours.weekend} • ${d.location}`
+          }));
+          break;
+        case 'library':
+          items = [
+            { title: 'Library Hours', detail: `Weekday: ${campusDB.library.hours.weekday} • Weekend: ${campusDB.library.hours.weekend}` },
+            ...campusDB.library.services.map(s => ({ title: s.name, detail: s.info })),
+            ...campusDB.library.policies.map(p => ({ title: p.title, detail: p.text })),
+          ].filter(i => !q || (i.title + ' ' + i.detail).toLowerCase().includes(q));
+          break;
+        case 'admin':
+          items = campusDB.admin.filter(a =>
+            !q || a.office.toLowerCase().includes(q) || a.location.toLowerCase().includes(q) || a.services.join(' ').toLowerCase().includes(q)
+          ).map(a => ({
+            title: a.office,
+            detail: `${a.location} • Weekday: ${a.hours.weekday} • Services: ${a.services.join(', ')}`
+          }));
+          break;
+        case 'map':
+          items = campusDB.map.filter(m =>
+            !q || m.name.toLowerCase().includes(q) || m.area.toLowerCase().includes(q) || m.nearby.join(' ').toLowerCase().includes(q)
+          ).map(m => ({
+            title: m.name,
+            detail: `Area: ${m.area} • Nearby: ${m.nearby.join(', ')}`
+          }));
+          break;
+      }
+      dataListEl.innerHTML = items.length
+        ? items.map(i => `<div class="rounded-xl bg-white/5 ring-1 ring-white/10 px-3 py-2">
+            <div class="font-medium">${sanitize(i.title)}</div>
+            <div class="text-sm text-white/80">${sanitize(i.detail)}</div>
+          </div>`).join('')
+        : `<div class="text-white/70">No results. Try a different search.</div>`;
+    }
+
+    // ---------- Share/export ----------
+    function exportQnA() {
+      if (!memory.qna.length) {
+        alert('No Q&A to export yet.');
+        return;
+      }
+      const lines = memory.qna.map(item => {
+        const refs = (item.refs || []).map(r => `  - ${r.title}: ${r.detail}`).join('\n');
+        return `Q: ${item.q}\nA: ${item.a}${refs ? '\n' + refs : ''}`;
+      }).join('\n\n');
+      const blob = new Blob([lines], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'campus-chatbot-qna.txt';
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      a.remove();
+    }
+
+    function updateShareLink() {
+      const params = new URLSearchParams();
+      params.set('tab', activeTab);
+      if (searchEl.value) params.set('q', searchEl.value);
+      if (dayFilterEl.value !== 'auto') params.set('day', dayFilterEl.value);
+      const share = location.origin + location.pathname + '?' + params.toString();
+      navigator.clipboard.writeText(share).then(() => {
+        copyLinkEl.textContent = 'Copied!';
+        setTimeout(() => copyLinkEl.textContent = 'Share', 1200);
+      }).catch(() => {
+        alert('Link copied failed. You can copy from the address bar.');
+      });
+      // Reflect in URL (no navigation)
+      history.replaceState({}, '', '?' + params.toString());
+    }
+
+    function restoreFromURL() {
+      const params = new URLSearchParams(location.search);
+      const t = params.get('tab');
+      const q = params.get('q');
+      const d = params.get('day');
+      if (t && tabs.some(b => b.dataset.tab === t)) activeTab = t;
+      if (q) searchEl.value = q;
+      if (d) dayFilterEl.value = d;
+      tabs.forEach(b => b.classList.toggle('bg-emerald-400', b.dataset.tab === activeTab));
+      tabs.forEach(b => b.classList.toggle('text-emerald-950', b.dataset.tab === activeTab));
+      tabs.forEach(b => b.classList.toggle('hover:bg-white/20', b.dataset.tab !== activeTab));
+      renderList();
+    }
+
+    // ---------- Event wiring ----------
+    // Welcome message
+    addAssistantMessage("Hi! I’m your campus assistant. Ask me about class schedules, facilities, dining, library services, or administrative procedures. How can I help today?");
+
+    // Tabs
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeTab = btn.dataset.tab;
+        tabs.forEach(b => {
+          const active = b === btn;
+          b.classList.toggle('bg-emerald-400', active);
+          b.classList.toggle('text-emerald-950', active);
+          b.classList.toggle('hover:bg-white/20', !active);
         });
+        renderList();
+      });
+    });
 
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
+    // Search and filters
+    searchEl.addEventListener('input', renderList);
+    dayFilterEl.addEventListener('change', renderList);
+    copyLinkEl.addEventListener('click', updateShareLink);
 
-        const data = await response.json();
-        messagesEl.removeChild(typingMsg);
-        addMessage('bot', data.answer || "Sorry, I couldn't find that info.");
-      } catch (error) {
-        messagesEl.removeChild(typingMsg);
-        addMessage('bot', "Oops! Something went wrong. Please try again later.");
-        console.error('Error:', error);
-      }
+    // Quick chips
+    document.querySelectorAll('.chip.quick').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const q = chip.textContent.trim();
+        inputEl.value = q;
+        inputEl.dispatchEvent(new Event('input'));
+        // Auto send
+        addUserMessage(q);
+        simulateThinking(() => handleQuery(q));
+        inputEl.value = '';
+        inputEl.style.height = 'auto';
+      });
+    });
+
+    // Clear / Export buttons
+    function clearChat() {
+      chatEl.innerHTML = '';
+      memory.history = [];
+      memory.qna = [];
+      addAssistantMessage("Chat cleared. Ask me anything about campus!");
     }
+    byId('clearBtn').addEventListener('click', clearChat);
+    byId('clearBtn2').addEventListener('click', clearChat);
+    byId('exportBtn').addEventListener('click', exportQnA);
+    byId('exportBtn2').addEventListener('click', exportQnA);
+
+    // Mic button (placeholder with friendly note)
+    byId('micBtn').addEventListener('click', () => {
+      // Canva Code does not support audio input yet in this environment.
+      addAssistantMessage("Voice input isn’t available in this demo, but you can type your question and I’ll help!");
+    });
+
+    // Autosize textarea
+    inputEl.addEventListener('input', () => {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+    });
+
+    // Composer submit
+    composerEl.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = inputEl.value.trim();
+      if (!text) return;
+      addUserMessage(text);
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      simulateThinking(() => handleQuery(text));
+    });
+
+    // Initial render
+    restoreFromURL();
   </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97e5cdbe909da7e4',t:'MTc1Nzc0NzIwNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
